@@ -10,7 +10,7 @@ import Foundation
 struct AppConstants {
     
     private struct AccessToken {
-        static let string = "Your Access Token here"
+        static let string = "Your access token here"
     }
     
     struct APIEndpoints {

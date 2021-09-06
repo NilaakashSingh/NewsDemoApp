@@ -10,6 +10,8 @@ import SwiftUI
 struct NewsListView: View {
     
     @StateObject private var viewModel = NewsListViewModel()
+    @State private var showErrorAlert = false
+    @State private var error = NetworkError.unknown
     
     var body: some View {
         NavigationView {
@@ -26,8 +28,22 @@ struct NewsListView: View {
             }
             .navigationTitle("News")
             .onFirstAppear {
-                viewModel.getNewsList()
+                viewModel.getNewsList(completion: { result in
+                    switch result {
+                    case .failure(let error):
+                        showErrorAlert = true
+                        self.error = error
+                    default:
+                        print("We can also handle success case with received value")
+                    }
+                    
+                })
             }
+            .alert(isPresented: $showErrorAlert, content: {
+                Alert(title: Text("Error Occured"),
+                      message: Text(error.localizedDescription),
+                      dismissButton:.cancel())
+            })
         }
         
     }

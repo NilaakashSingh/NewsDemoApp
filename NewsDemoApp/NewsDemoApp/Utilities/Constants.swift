@@ -14,6 +14,10 @@ struct AppConstants {
     }
     
     struct APIEndpoints {
-        static let newsList = "https://newsapi.org/v2/everything?q=apple&from=2021-08-05&sortBy=publishedAt&apiKey=" + AccessToken.string
+        static let newsList = "https://newsapi.org/v2/everything?q=apple&sortBy=publishedAt&apiKey=" + AccessToken.string
     }
+}
+
+enum NetworkError: Error {
+    case badURL, requestFailed, unknown, badServerResponse
 }

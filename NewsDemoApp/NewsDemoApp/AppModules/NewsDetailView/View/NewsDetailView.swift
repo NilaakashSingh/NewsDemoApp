@@ -28,7 +28,6 @@ struct NewsDetailView: View {
                     sourceBody
                 }
                 .padding([.leading, .trailing])
-               
             }
             .frame(width: UIScreen.main.bounds.width)
         }

@@ -22,10 +22,11 @@ class NewsListViewModel: ObservableObject {
 
 // MARK: - API methods
 extension NewsListViewModel {
-    func getNewsList() {
+    func getNewsList(completion: @escaping (Result<Bool, NetworkError>) -> Void) {
         showProgressView = true
         guard let url = URL(string: AppConstants.APIEndpoints.newsList) else {
             showProgressView = false
+            completion(.failure(.badURL))
             return
         }
         newsListCancellable = URLSession.shared.dataTaskPublisher(for: url)
@@ -33,7 +34,10 @@ extension NewsListViewModel {
                 guard let response = result.response as? HTTPURLResponse,
                       response.statusCode == 200 else {
                     print("Response error is received")
-                    self.showProgressView = false
+                    DispatchQueue.main.async {
+                        self.showProgressView = false
+                    }
+                    completion(.failure(.badServerResponse))
                     throw URLError(.badServerResponse)
                 }
                 return result.data
@@ -45,6 +49,7 @@ extension NewsListViewModel {
                     self.articles = articles
                 }
                 self.showProgressView = false
+                completion(.success(true))
             })
     }
 }

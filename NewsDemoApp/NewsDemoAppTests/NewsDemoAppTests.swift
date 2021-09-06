@@ -22,7 +22,6 @@ class NewsDemoAppTests: XCTestCase {
     
     var showProgressView: Bool!
     var articles: [Article]!
-    var viewModel = NewsListViewModel()
 
     override func setUpWithError() throws {
         showProgressView = false
@@ -34,11 +33,31 @@ class NewsDemoAppTests: XCTestCase {
     }
 
     func testNewsListAPI() throws {
-       _ = viewModel.newsList()
+        let viewModel = NewsListViewModel()
+        _ = viewModel.newsList()
         XCTAssertTrue(true, "This is just a method that returns a published array")
     }
 
-    func testGetNewsListAPI() throws {
+    // We can also compare expected data but for now we are only comparing the response success or failure
+    func testGetNewsListAPISuccess() throws {
+        let viewModel = NewsListViewModel(webService: MockWebServiceSuccess())
+        viewModel.getNewsList { result in
+            switch result {
+            case .success(let isSuccess):
+                if isSuccess {
+                    XCTAssertTrue(true, "This is success case")
+                } else {
+                    XCTAssertFalse(false, "This is failure message")
+                }
+            case .failure(let error):
+                XCTAssertFalse(false, error.localizedDescription)
+            }
+        }
+        XCTAssertTrue(true, "After wait")
+    }
+    
+    func testGetNewsListAPIFailure() throws {
+        let viewModel = NewsListViewModel(webService: MockWebServiceFailure())
         viewModel.getNewsList { result in
             switch result {
             case .success(let isSuccess):
@@ -68,7 +87,6 @@ class NewsDemoAppTests: XCTestCase {
         }
     }
     
-    
     func testNewsCell() {
         let newsCell = NewsCell(title: "This is title", urlToImage: "https://s.yimg.com/os/creatr-uploaded-images/2021-09/7c269990-0d97-11ec-bf2f-32fb211ca9fb", publishedAt: "5 Sep 2021, 6.15 pm")
         _ = newsCell.body
@@ -91,5 +109,31 @@ class NewsDemoAppTests: XCTestCase {
         let newsCell = NewsDetailView(article: article)
         _ = newsCell.body
         XCTAssertTrue(true, "Just covering news detail scope ideally this should be ui tested")
+    }
+}
+
+class MockWebServiceSuccess: WebService {
+    func getNewsList() -> AnyPublisher<News, Error>? {
+        let article = Article(author: "Jon Fingas", title: "Germany wants phone makers to offer 7 years of security updates", description: "Your current phone might get security patches for several years to come, at least if Germany has its way. C'treports the German federal government is pushing the European Union to require seven years of security updates and spare parts for smartphones as part…", url: "https://www.engadget.com/germany-phone-makers-7-years-security-updates-163601435.html", urlToImage: "https://s.yimg.com/os/creatr-uploaded-images/2021-09/7c269990-0d97-11ec-bf2f-32fb211ca9fb", publishedAt: "2021-09-04T16:36:01Z", content: "Your current phone might get security patches for several years to come, at least if Germany has its way. C'treports the German federal government is pushing the European Union to require seven years… [+1763 chars]", source: Source(id: "Engadget", name: "Engadget"))
+        return AnyPublisher(Just(News(articles: [article])))
+            .setFailureType(to: Error.self)
+            .eraseToAnyPublisher()
+    }
+}
+
+class MockWebServiceFailure: WebService {
+    func getNewsList() -> AnyPublisher<News, Error>? {
+        return URLSession.shared.dataTaskPublisher(for: URL(string: AppConstants.APIEndpoints.newsList)!)
+            .tryMap({ result in
+                guard let response = result.response as? HTTPURLResponse,
+                      response.statusCode == 200 else {
+                    print("Response error is received")
+                    throw URLError(.badServerResponse)
+                }
+                return result.data
+            })
+            .decode(type: News.self, decoder: JSONDecoder())
+            .receive(on: RunLoop.main)
+            .eraseToAnyPublisher()
     }
 }

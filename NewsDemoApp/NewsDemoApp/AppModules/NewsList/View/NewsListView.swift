@@ -11,7 +11,7 @@ struct NewsListView: View {
     
     @StateObject private var viewModel = NewsListViewModel()
     @State private var showErrorAlert = false
-    @State private var error = NetworkError.unknown
+    @State private var errorString: String = .empty
     
     var body: some View {
         NavigationView {
@@ -32,7 +32,7 @@ struct NewsListView: View {
                     switch result {
                     case .failure(let error):
                         showErrorAlert = true
-                        self.error = error
+                        self.errorString = error.localizedDescription
                     default:
                         print("We can also handle success case with received value")
                     }
@@ -41,7 +41,7 @@ struct NewsListView: View {
             }
             .alert(isPresented: $showErrorAlert, content: {
                 Alert(title: Text("Error Occured"),
-                      message: Text(error.localizedDescription),
+                      message: Text(errorString),
                       dismissButton:.cancel())
             })
         }
